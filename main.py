@@ -55,6 +55,7 @@ pygame.display.set_caption("BREAKOUT")
 
 game_won = False
 current_level = 1
+max_level = 5
 ball_in_play = False
 game_over = False
 running = True
@@ -228,10 +229,10 @@ while running:
         current_level += 1
         if current_level in LEVEL_CONFIG:
             start_level(current_level)
-            print("HAZ PASADO DE NIVEL")
+            print("HAZ PASADO AL NIVEL", current_level, "!")
         else:
-            game_won = True
-                
+            print("¡JUEGO COMPLETO! REINICIANDO DESDE NIVEL 1...")
+            reset_game()                
 
     pygame.draw.rect(screen, blue, paddle)
     draw_score(screen, score)
