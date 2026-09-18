@@ -1,4 +1,4 @@
-import sys, pygame, random
+import sys, pygame, math
 
 # Inicializando los componenetes de pygame
 pygame.init()
@@ -20,15 +20,14 @@ high_score = 0
 #Radio de la bola
 radio = 10
 
-ball_x, ball_y = 540, 630
-
 #Posición del paddle
 paddle_x, paddle_y = 500, 650
 paddle_width, paddle_height = 100, 20
 
 paddle = pygame.Rect(paddle_x, paddle_y, paddle_width, paddle_height)
 
-#Posición de la bola
+#Posición de la pelota
+ball_x, ball_y = 540, 630
 ball_position = pygame.Rect(ball_x, ball_y, 20, 20)
 ball_position.center = (ball_x, ball_y)
 
@@ -47,7 +46,8 @@ total_lives = 300
 print("Total de vidas", total_lives)
 
 bricks = []
-ball_speed = [5, -5]
+ball_speed = [4, 5]
+
 paddle_speed = 8
 
 screen = pygame.display.set_mode(size)
@@ -68,6 +68,20 @@ LEVEL_CONFIG = {
     4: {"rows": 9, "cols": 9, "paddle_width": 140, "speed": 7, "base": 17},
     5: {"rows": 11, "cols": 11, "paddle_width": 100, "speed": 8, "base": 20},
 }
+
+def bounce_angle(ball_speed, normal):
+    vx, vy = ball_speed
+    nx, ny = normal
+
+    longitud = math.sqrt(nx**2 + ny**2)
+
+    nx /= longitud
+    ny /= longitud
+
+    product = vx * nx + vy * ny
+
+    ball_speed[0] = vx - 2 * product * nx
+    ball_speed[1] = vy - 2 * product * ny
 
 def start_level(level):
     config = LEVEL_CONFIG[level]
@@ -197,8 +211,9 @@ while running:
 
     if paddle.colliderect(ball_position) and ball_speed[1] > 0:
         print("Collision detected")
-        ball_speed[1] = -abs(ball_speed[1])
+        #ball_speed[1] = -abs(ball_speed[1])
         ball_position.bottom = paddle.top
+        bounce_angle(ball_speed, [0, -1])
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -237,6 +252,7 @@ while running:
     pygame.draw.rect(screen, blue, paddle)
     draw_score(screen, score)
     draw_lives(screen, total_lives)
+    print(ball_speed)
     pygame.display.flip()
 pygame.quit()
 sys.exit()
