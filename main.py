@@ -83,6 +83,26 @@ def bounce_angle(ball_speed, normal):
     ball_speed[0] = vx - 2 * product * nx
     ball_speed[1] = vy - 2 * product * ny
 
+def paddle_bounce(ball_position, paddle, ball_speed):
+    # 1. Donde pego la pelota
+    hit_x = ball_position.centerx
+
+    # 2. Convertirlo a p (-1 izquierda, 0 centro, 1 derecha)
+    p = (hit_x - paddle.centerx) / (paddle.width / 2)
+
+    # 3. Mantener la velocidad actual
+    speed = math.sqrt(ball_speed[0]**2 + ball_speed[1]**2)
+
+    # 4. Modificamos Vx
+    ball_speed[0] = ball_speed[0] + 3 * p
+
+    # 5. Evitar que Vx sea muy grande
+    max_vx = speed * 0.9
+    ball_speed[0] = max(-max_vx, min(ball_speed[0], max_vx))
+
+    # 6. Calculamos Vy
+    ball_speed[1] = -math.sqrt(speed**2 - ball_speed[0]**2)
+
 def start_level(level):
     config = LEVEL_CONFIG[level]
 
@@ -161,7 +181,6 @@ while running:
     clock.tick(60)
 
     keys = pygame.key.get_pressed()
-    ball_position = ball_position.move(ball_speed)
 
     if ball_in_play and len(bricks) == 0:
         current_level += 1
@@ -174,7 +193,7 @@ while running:
         ball_position.centerx = paddle.centerx
         ball_position.bottom = paddle.top
 
-    if ball_in_play == True:
+    if ball_in_play:
         ball_position.x += ball_speed[0]
         ball_position.y += ball_speed[1]
 
@@ -213,7 +232,7 @@ while running:
         print("Collision detected")
         #ball_speed[1] = -abs(ball_speed[1])
         ball_position.bottom = paddle.top
-        bounce_angle(ball_speed, [0, -1])
+        paddle_bounce(ball_position, paddle, ball_speed)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -252,7 +271,7 @@ while running:
     pygame.draw.rect(screen, blue, paddle)
     draw_score(screen, score)
     draw_lives(screen, total_lives)
-    print(ball_speed)
+    #print(ball_speed)
     pygame.display.flip()
 pygame.quit()
 sys.exit()
