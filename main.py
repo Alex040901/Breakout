@@ -194,6 +194,8 @@ while running:
         ball_position.bottom = paddle.top
 
     if ball_in_play:
+        previous_position = ball_position.copy()
+
         ball_position.x += ball_speed[0]
         ball_position.y += ball_speed[1]
 
@@ -251,12 +253,51 @@ while running:
         for item in bricks[:]:
             bloques, color = item
             if ball_position.colliderect(bloques):
-                print("COLISIÓN CON BLOQUE")
                 score += 3
-                print("ANTES:", len(bricks))
                 bricks.remove(item)
-                print("DESPUÉS:", len(bricks))
-                ball_speed[1] = -ball_speed[1]
+                print(
+                    "DER:",
+                    previous_position.left,
+                    bloques.right,
+                    ball_position.left,
+                    ball_speed[0]
+                )
+                if previous_position.bottom < bloques.top and \
+                    ball_position.bottom >= bloques.top and \
+                    ball_position.right >= bloques.left and \
+                    ball_position.left <= bloques.right and \
+                    ball_speed[1] > 0:
+                    normal = (0, -1)
+                    bounce_angle(ball_speed, normal)
+                    print("COLISIÓN CON BLOQUE SUPERIOR")
+                    print("REBOTE SUPERIOR", ball_speed)
+                if previous_position.right < bloques.left and \
+                    ball_position.right >= bloques.left and \
+                    ball_position.bottom >= bloques.top and \
+                    ball_position.top <= bloques.bottom and \
+                    ball_speed[0] > 0:
+                    normal = (-1, 0)
+                    bounce_angle(ball_speed, normal)
+                    print("COLISIÓN CON BLOQUE IZQUIERDO")
+                    print("REBOTE IZQUIERDO", ball_speed)
+                if previous_position.left > bloques.right and \
+                    ball_position.left <= bloques.right and \
+                    ball_position.bottom >= bloques.top and \
+                    ball_position.top <= bloques.bottom and \
+                    ball_speed[0] < 0:
+                    normal = (1, 0)
+                    bounce_angle(ball_speed, normal)
+                    print("COLISIÓN CON BLOQUE DERECHO")
+                    print("REBOTE DERECHO", ball_speed)
+                if previous_position.top > bloques.bottom and \
+                    ball_position.top <= bloques.bottom and \
+                    ball_position.right >= bloques.left and \
+                    ball_position.left <= bloques.right and \
+                    ball_speed[1] < 0:
+                    normal = (0, 1)
+                    bounce_angle(ball_speed, normal)
+                    print("COLISIÓN CON BLOQUE INFERIO")
+                    print("REBOTE INFERIOR", ball_speed)
                 break
 
     if len(bricks) == 0:
