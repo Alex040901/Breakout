@@ -13,7 +13,7 @@ x, y = 0, 0
 
 font = pygame.font.Font(None, 30)
 font_lives = pygame.font.Font(None, 30)
-font_sub = pygame.font.Font(None, 60)
+font_state = pygame.font.Font(None, 50)
 score = 0
 high_score = 0
 
@@ -42,8 +42,7 @@ rows, cols, padding = 30, 3, 5
 offset_top, offset_left = 30, 17
 row_colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255)]
 
-total_lives = 300
-print("Total de vidas", total_lives)
+total_lives = 3
 
 bricks = []
 ball_speed = [4, 5]
@@ -122,9 +121,16 @@ def draw_lives(surface, lives):
     lives_text = font_lives.render(f"Total_lives: {lives}", True, white)
     surface.blit(lives_text, (200, 0))
 
-#def draw_score(surface, score_value, high_score_value):
-    #score_text = font.render(f"Score: {score_value} | Record: {high_score_value}", True, white)
-    #surface.blit(score_text, (offset_top, offset_left))
+def draw_state(surface):
+    texto = font_state.render("Game Over", True, white)
+    text_rect = texto.get_rect()
+    text_rect.center = (width // 2, height // 2)
+    surface.blit(texto, text_rect)
+
+    restart_text = font_state.render("Presiona ENTER para reiniciar", True, white)
+    restart_rect = restart_text.get_rect()
+    restart_rect.center = (width // 2, height // 3)
+    surface.blit(restart_text, restart_rect)
 
 def reset_round():
     global ball_speed, ball_in_play, paddle_speed
@@ -199,17 +205,14 @@ while running:
         ball_position.x += ball_speed[0]
         ball_position.y += ball_speed[1]
 
-    if game_over == True:
-        reset_game()
-
     if keys[pygame.K_UP]:
         ball_in_play = True
-
-    if keys[pygame.K_LEFT]:
-        paddle.x -= paddle_speed
-    
-    if keys[pygame.K_RIGHT]:
-        paddle.x += paddle_speed
+    if not game_over:
+        if keys[pygame.K_LEFT]:
+            paddle.x -= paddle_speed
+        
+        if keys[pygame.K_RIGHT]:
+            paddle.x += paddle_speed
 
     if paddle.left < 0:
         paddle.left = 0
@@ -221,17 +224,15 @@ while running:
     if ball_position.top < 0:
         ball_speed[1] = -ball_speed[1]
 
-    if ball_position.bottom > height:
-        print("-1UP")
-        total_lives -= 1
-        print("Vidas ", total_lives)
-        if total_lives > 0:
-            reset_round()
-        else:
-            game_over = True        
+    if not game_over:
+        if ball_position.bottom > height:
+            total_lives -= 1
+            if total_lives > 0:
+                reset_round()
+            else:
+                game_over = True        
 
     if paddle.colliderect(ball_position) and ball_speed[1] > 0:
-        print("Collision detected")
         #ball_speed[1] = -abs(ball_speed[1])
         ball_position.bottom = paddle.top
         paddle_bounce(ball_position, paddle, ball_speed)
@@ -241,7 +242,11 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                running = False          
+                running = False 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN and game_over:
+                reset_game()
+
     
     screen.fill(black)
     pygame.draw.circle(screen, white, ball_position.center, radio)
@@ -250,69 +255,55 @@ while running:
     for bloques, color in bricks:
         pygame.draw.rect(screen, color, bloques)
 
-        for item in bricks[:]:
-            bloques, color = item
-            if ball_position.colliderect(bloques):
-                score += 3
-                bricks.remove(item)
-                print(
-                    "DER:",
-                    previous_position.left,
-                    bloques.right,
-                    ball_position.left,
-                    ball_speed[0]
-                )
-                if previous_position.bottom < bloques.top and \
-                    ball_position.bottom >= bloques.top and \
-                    ball_position.right >= bloques.left and \
-                    ball_position.left <= bloques.right and \
-                    ball_speed[1] > 0:
-                    normal = (0, -1)
-                    bounce_angle(ball_speed, normal)
-                    print("COLISIÓN CON BLOQUE SUPERIOR")
-                    print("REBOTE SUPERIOR", ball_speed)
-                if previous_position.right < bloques.left and \
-                    ball_position.right >= bloques.left and \
-                    ball_position.bottom >= bloques.top and \
-                    ball_position.top <= bloques.bottom and \
-                    ball_speed[0] > 0:
-                    normal = (-1, 0)
-                    bounce_angle(ball_speed, normal)
-                    print("COLISIÓN CON BLOQUE IZQUIERDO")
-                    print("REBOTE IZQUIERDO", ball_speed)
-                if previous_position.left > bloques.right and \
-                    ball_position.left <= bloques.right and \
-                    ball_position.bottom >= bloques.top and \
-                    ball_position.top <= bloques.bottom and \
-                    ball_speed[0] < 0:
-                    normal = (1, 0)
-                    bounce_angle(ball_speed, normal)
-                    print("COLISIÓN CON BLOQUE DERECHO")
-                    print("REBOTE DERECHO", ball_speed)
-                if previous_position.top > bloques.bottom and \
-                    ball_position.top <= bloques.bottom and \
-                    ball_position.right >= bloques.left and \
-                    ball_position.left <= bloques.right and \
-                    ball_speed[1] < 0:
-                    normal = (0, 1)
-                    bounce_angle(ball_speed, normal)
-                    print("COLISIÓN CON BLOQUE INFERIO")
-                    print("REBOTE INFERIOR", ball_speed)
-                break
+    for item in bricks[:]:
+        bloques, color = item
+        colision_valida = False
+        if ball_position.colliderect(bloques):
+            score += 3
+            bricks.remove(item)
+            if previous_position.bottom <= bloques.top and \
+                ball_position.bottom >= bloques.top and \
+                ball_position.right >= bloques.left and \
+                ball_position.left <= bloques.right and \
+                ball_speed[1] > 0:
+                colision_valida = True
+                normal = (0, -1)
+                bounce_angle(ball_speed, normal)
+            elif previous_position.right <= bloques.left and \
+                ball_position.right >= bloques.left and \
+                ball_position.bottom >= bloques.top and \
+                ball_position.top <= bloques.bottom and \
+                ball_speed[0] > 0:
+                normal = (-1, 0)
+                bounce_angle(ball_speed, normal)
+            elif previous_position.left >= bloques.right and \
+                ball_position.left <= bloques.right and \
+                ball_position.bottom >= bloques.top and \
+                ball_position.top <= bloques.bottom and \
+                ball_speed[0] < 0:
+                normal = (1, 0)
+                bounce_angle(ball_speed, normal)
+            elif previous_position.top >= bloques.bottom and \
+                ball_position.top <= bloques.bottom and \
+                ball_position.right >= bloques.left and \
+                ball_position.left <= bloques.right and \
+                ball_speed[1] < 0:
+                normal = (0, 1)
+                bounce_angle(ball_speed, normal)
+            break
 
     if len(bricks) == 0:
         current_level += 1
         if current_level in LEVEL_CONFIG:
             start_level(current_level)
-            print("HAZ PASADO AL NIVEL", current_level, "!")
         else:
-            print("¡JUEGO COMPLETO! REINICIANDO DESDE NIVEL 1...")
             reset_game()                
 
+    if game_over:
+        draw_state(screen)
     pygame.draw.rect(screen, blue, paddle)
     draw_score(screen, score)
     draw_lives(screen, total_lives)
-    #print(ball_speed)
     pygame.display.flip()
 pygame.quit()
 sys.exit()
