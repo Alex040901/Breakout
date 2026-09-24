@@ -54,18 +54,17 @@ pygame.display.set_caption("BREAKOUT")
 
 game_won = False
 current_level = 1
-max_level = 5
 ball_in_play = False
 game_over = False
 running = True
 clock = pygame.time.Clock()
 
 LEVEL_CONFIG = {
-    1: {"rows": 3, "cols": 3, "paddle_width": 200, "speed": 4, "base": 8},
-    2: {"rows": 5, "cols": 5, "paddle_width": 180, "speed": 5, "base": 11},
-    3: {"rows": 7, "cols": 7, "paddle_width": 150, "speed": 6, "base": 14},
-    4: {"rows": 9, "cols": 9, "paddle_width": 140, "speed": 7, "base": 17},
-    5: {"rows": 11, "cols": 11, "paddle_width": 100, "speed": 8, "base": 20},
+    1: {"rows": 3, "cols": 7, "paddle_width": 200, "speed": 4, "base": 8},
+    2: {"rows": 5, "cols": 9, "paddle_width": 180, "speed": 5, "base": 11},
+    3: {"rows": 7, "cols": 11, "paddle_width": 150, "speed": 6, "base": 14},
+    4: {"rows": 9, "cols": 13, "paddle_width": 140, "speed": 7, "base": 17},
+    5: {"rows": 1, "cols": 1, "paddle_width": 100, "speed": 8, "base": 20},
 }
 
 def bounce_angle(ball_speed, normal):
@@ -118,19 +117,27 @@ def draw_score(surface, score_value):
     surface.blit(score_text, (0, 0))
 
 def draw_lives(surface, lives):
-    lives_text = font_lives.render(f"Total_lives: {lives}", True, white)
+    lives_text = font_lives.render(f"Lives: {lives}", True, white)
     surface.blit(lives_text, (200, 0))
 
 def draw_state(surface):
-    texto = font_state.render("Game Over", True, white)
-    text_rect = texto.get_rect()
-    text_rect.center = (width // 2, height // 2)
-    surface.blit(texto, text_rect)
+    if game_over:
+        texto = font_state.render("Game Over", True, white)
+        text_rect = texto.get_rect()
+        text_rect.center = (width // 2, height // 2)
+        surface.blit(texto, text_rect)
 
-    restart_text = font_state.render("Presiona ENTER para reiniciar", True, white)
-    restart_rect = restart_text.get_rect()
-    restart_rect.center = (width // 2, height // 3)
-    surface.blit(restart_text, restart_rect)
+    if game_over or game_won:
+        restart_text = font_state.render("Presiona ENTER para reiniciar", True, white)
+        restart_rect = restart_text.get_rect()
+        restart_rect.center = (width // 2, height // 3)
+        surface.blit(restart_text, restart_rect)
+
+    if game_won:
+        won_text = font_state.render("Game Win!", True, white)
+        won_rect = won_text.get_rect()
+        won_rect.center = (width // 2, height // 2)
+        surface.blit(won_text, won_rect) 
 
 def reset_round():
     global ball_speed, ball_in_play, paddle_speed
@@ -144,11 +151,12 @@ def reset_round():
     #paddle.y = paddle_y  
 
 def reset_game():
-    global total_lives, game_over, score, current_level
+    global total_lives, game_over, score, current_level, game_won
     current_level = 1
     total_lives = 3
     score = 0
     game_over = False
+    game_won = False
     start_level(1)
     #reset_round()
 
@@ -188,13 +196,6 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if ball_in_play and len(bricks) == 0:
-        current_level += 1
-        if current_level in LEVEL_CONFIG:
-            start_level(current_level)
-        else:
-            game_won = True
-
     if ball_in_play == False:
         ball_position.centerx = paddle.centerx
         ball_position.bottom = paddle.top
@@ -207,7 +208,9 @@ while running:
 
     if keys[pygame.K_UP]:
         ball_in_play = True
-    if not game_over:
+
+    if not game_over and not game_won:
+
         if keys[pygame.K_LEFT]:
             paddle.x -= paddle_speed
         
@@ -224,7 +227,7 @@ while running:
     if ball_position.top < 0:
         ball_speed[1] = -ball_speed[1]
 
-    if not game_over:
+    if not game_over and not game_won:
         if ball_position.bottom > height:
             total_lives -= 1
             if total_lives > 0:
@@ -244,7 +247,7 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 running = False 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN and game_over:
+            if event.key == pygame.K_RETURN and (game_over or game_won):
                 reset_game()
 
     
@@ -292,14 +295,17 @@ while running:
                 bounce_angle(ball_speed, normal)
             break
 
-    if len(bricks) == 0:
-        current_level += 1
-        if current_level in LEVEL_CONFIG:
-            start_level(current_level)
-        else:
-            reset_game()                
+    if not game_over:
+        if len(bricks) == 0:
+            current_level += 1
+            if current_level in LEVEL_CONFIG:
+                start_level(current_level)
+            else:
+                game_won = True                
 
     if game_over:
+        draw_state(screen)
+    if game_won:
         draw_state(screen)
     pygame.draw.rect(screen, blue, paddle)
     draw_score(screen, score)
