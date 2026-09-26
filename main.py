@@ -66,7 +66,7 @@ LEVEL_CONFIG = {
     2: {"rows": 5, "cols": 9, "paddle_width": 180, "speed": 5, "base": 11},
     3: {"rows": 7, "cols": 11, "paddle_width": 150, "speed": 6, "base": 14},
     4: {"rows": 9, "cols": 13, "paddle_width": 140, "speed": 7, "base": 17},
-    5: {"rows": 1, "cols": 1, "paddle_width": 100, "speed": 8, "base": 20},
+    5: {"rows": 11, "cols": 15, "paddle_width": 100, "speed": 8, "base": 20},
 }
 
 def bounce_angle(ball_speed, normal):
@@ -111,7 +111,7 @@ def start_level(level):
     paddle.width = config["paddle_width"]
     paddle.centerx = width // 2
 
-    create_blocks(config["rows"], config["cols"])
+    create_blocks(screen, config["rows"], config["cols"])
 
     reset_round()
     ball_origin()
@@ -182,13 +182,13 @@ def ball_origin():
     ball_position.centerx = paddle.centerx
     ball_position.bottom = paddle.top
 
-def create_blocks(rows_count, cols_count):
+def create_blocks(surface, rows_count, cols_count):
     global bricks
     bricks.clear()
 
-    total_grid_width = (cols * brick_width) + ((cols - 1) * padding)
+    total_grid_width = (cols_count * brick_width) + ((cols_count - 1) * padding)
 
-    offset_left = (screen.get_width() - total_grid_width) // 2
+    offset_left = (surface.get_width() - total_grid_width) // 2
     
     for r in range (rows_count):
         y = offset_top + r * (brick_height + padding)
