@@ -45,13 +45,15 @@ row_colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255
 total_lives = 3
 
 bricks = []
-ball_speed = [4, 5]
+ball_speed = [6, 7]
 
 paddle_speed = 8
 
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("BREAKOUT")
 
+level_start_time = 0
+level_transition = False
 game_won = False
 current_level = 1
 ball_in_play = False
@@ -102,6 +104,8 @@ def paddle_bounce(ball_position, paddle, ball_speed):
     ball_speed[1] = -math.sqrt(speed**2 - ball_speed[0]**2)
 
 def start_level(level):
+    global level_start_time
+    level_start_time = pygame.time.get_ticks()
     config = LEVEL_CONFIG[level]
 
     paddle.width = config["paddle_width"]
@@ -112,13 +116,23 @@ def start_level(level):
     reset_round()
     ball_origin()
 
-def draw_score(surface, score_value):
-    score_text = font.render(f"Score: {score_value}", True, white)
+def draw_score(surface, score_value, high_score_value):
+    score_text = font.render(f"Score: {score_value} | Record: {high_score_value}", True, white)
     surface.blit(score_text, (0, 0))
 
 def draw_lives(surface, lives):
     lives_text = font_lives.render(f"Lives: {lives}", True, white)
-    surface.blit(lives_text, (200, 0))
+    surface.blit(lives_text, (300, 0))
+
+def draw_level(surface, current_level):
+    level_text = font_lives.render(f"Level: {current_level}", True, white)
+    surface.blit(level_text, (500, 0))
+
+def draw_level_transition(surface, current_level):
+    level_text = font_lives.render(f"Level: {current_level}", True, white)
+    level_rect = level_text.get_rect()
+    level_rect.center = (width // 2, height // 2)
+    surface.blit(level_text, level_rect)
 
 def draw_state(surface):
     if game_over:
@@ -189,6 +203,13 @@ def create_blocks(rows_count, cols_count):
 def draw_blocks():
     for bloque, color in bricks:
         pygame.draw.rect(screen, color, bloque)
+try:
+    with open("breakout_highscore.txt", "r") as file:
+        high_score = int(file.read())
+except FileNotFoundError:
+    high_score = 0
+except ValueError:
+    high_score = 0
 
 start_level(1)
 while running:
@@ -200,16 +221,17 @@ while running:
         ball_position.centerx = paddle.centerx
         ball_position.bottom = paddle.top
 
-    if ball_in_play:
+    if ball_in_play and not level_transition:
         previous_position = ball_position.copy()
 
         ball_position.x += ball_speed[0]
         ball_position.y += ball_speed[1]
 
-    if keys[pygame.K_UP]:
-        ball_in_play = True
+    if not level_transition:
+        if keys[pygame.K_UP]:
+            ball_in_play = True
 
-    if not game_over and not game_won:
+    if not game_over and not game_won and not level_transition:
 
         if keys[pygame.K_LEFT]:
             paddle.x -= paddle_speed
@@ -263,6 +285,12 @@ while running:
         colision_valida = False
         if ball_position.colliderect(bloques):
             score += 3
+
+            if score > high_score:
+                high_score = score
+                with open("breakout_highscore.txt", "w") as file:
+                    file.write(str(high_score))
+
             bricks.remove(item)
             if previous_position.bottom <= bloques.top and \
                 ball_position.bottom >= bloques.top and \
@@ -295,20 +323,27 @@ while running:
                 bounce_angle(ball_speed, normal)
             break
 
-    if not game_over:
+    if not game_over and not game_won:
         if len(bricks) == 0:
-            current_level += 1
-            if current_level in LEVEL_CONFIG:
+            if current_level + 1 in LEVEL_CONFIG:
+                current_level += 1
+                level_transition = True
                 start_level(current_level)
             else:
-                game_won = True                
+                game_won = True    
+    if level_transition:
+        if pygame.time.get_ticks() - level_start_time >= 2000:
+            level_transition = False
 
     if game_over:
         draw_state(screen)
     if game_won:
-        draw_state(screen)
+        draw_state(screen)        
+    if level_transition:
+        draw_level_transition(screen, current_level)
     pygame.draw.rect(screen, blue, paddle)
-    draw_score(screen, score)
+    draw_score(screen, score, high_score)
+    draw_level(screen, current_level)
     draw_lives(screen, total_lives)
     pygame.display.flip()
 pygame.quit()
