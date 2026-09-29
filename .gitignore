@@ -5,4 +5,4 @@ venv/
 env/
 .vscode/
 .idea/
-highscore.txt
+breakout_highscore.txt
