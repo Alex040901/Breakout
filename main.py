@@ -42,7 +42,7 @@ rows, cols, padding = 30, 3, 5
 offset_top, offset_left = 30, 17
 row_colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255)]
 
-total_lives = 2
+total_lives = 3
 
 #bricks = []
 ball_speed = [4, 8]
@@ -62,11 +62,11 @@ running = True
 clock = pygame.time.Clock()
 
 LEVEL_CONFIG = {
-    1: {"rows": 1, "cols": 1, "paddle_width": 200, "speed": 8, "base": 12},
-    2: {"rows": 1, "cols": 1, "paddle_width": 180, "speed": 5, "base": 11},
-    3: {"rows": 1, "cols": 1, "paddle_width": 150, "speed": 6, "base": 14},
-    4: {"rows": 1, "cols": 1, "paddle_width": 140, "speed": 7, "base": 17},
-    5: {"rows": 1, "cols": 1, "paddle_width": 100, "speed": 8, "base": 20},
+    1: {"rows": 3, "cols": 8, "paddle_width": 200, "speed": 4, "base": 10},
+    2: {"rows": 4, "cols": 9, "paddle_width": 180, "speed": 5, "base": 11},
+    3: {"rows": 5, "cols": 10, "paddle_width": 160, "speed": 6, "base": 12},
+    4: {"rows": 6, "cols": 10, "paddle_width": 140, "speed": 7, "base": 14},
+    5: {"rows": 7, "cols": 11, "paddle_width": 120, "speed": 8, "base": 16},
 }
 
 def bounce_angle(ball_speed, normal):
@@ -219,7 +219,7 @@ def reset_round():
 def reset_game():
     global total_lives, game_over, score, current_level, game_won
     current_level = 1
-    total_lives = 2
+    total_lives = 3
     score = 0
     game_over = False
     game_won = False
